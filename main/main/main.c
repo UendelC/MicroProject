@@ -19,39 +19,39 @@ void configUsart()  {
 }
 
 void configADC(){
-//  ADMUX = 0x00;
+//  ADMUX = 0x00; // Canal 0 do ADC
   
-  ADCSRA = 0x87;
-  ADCSRB = 0x00;
+  ADCSRA = 0x87; // Liga o ADC, não inicia a conversão
+  ADCSRB = 0x00; // Uma conversão é iniciada sempre que o bit ADSC for setado
 }
 
 int readLDR() {
-  ADMUX = 0x02;
-  ADCSRA = ADCSRA | 0x40;
+  //ADMUX = 0x02;
+  ADCSRA = ADCSRA | 0x40; //Inicia a conversão ADCS = 1
   
-  while((ADCSRA & 0x10) != 0x10){}
-  unsigned char datah = ADCH;
+  while((ADCSRA & 0x10) != 0x10){} //Espera a conversão ser finalizada - ADIF = 1
   unsigned char datal = ADCL;
-  _delay_ms(200);
+  unsigned char datah = ADCH;
+  //_delay_ms(200);
   //unsigned int data = ADC;
-  ADCSRA = ADCSRA | 0x10;
+  ADCSRA = ADCSRA | 0x10; //Zera o flag
 
-  return ((datah << 8) | (datal));
+  return ((datah << 8) | (datal)); //Inteiro sem sinal 16 bits - 0 a 1023
 }
 
 
 int readLM35(){
-  ADMUX = 0x00;
-  ADCSRA = ADCSRA | 0x40;
+  ///ADMUX = 0x00;
+  ADCSRA = ADCSRA | 0x40; //Inicia a conversão ADCS = 1
   
-  while((ADCSRA & 0x10) != 0x10){}
-  unsigned char datah = ADCH;
+  while((ADCSRA & 0x10) != 0x10){} //Espera a conversão ser finalizada - ADIF=1
   unsigned char datal = ADCL;
-  _delay_ms(200);
+  unsigned char datah = ADCH;
+  ///_delay_ms(200);
   //unsigned int data = ADC;
-  ADCSRA = ADCSRA | 0x10;
+  ADCSRA = ADCSRA | 0x10; //Zera o Flag
   
-  return ((datah << 8) | (datal));
+  return ((datah << 8) | (datal)); //Inteiro sem sinal de 16 bits - 0 a 1023
 }
 
 
@@ -72,7 +72,7 @@ void convertToCelsiusStr(int data){
 }
 
 void convertToPercentage(int data) {
-  double lum = data; // 100 * (100.0 / 1023) * data;
+  double lum = 100 * (100.0 / 1023) * data;
 
   int inteira = (int) lum / 100;
   int decimal = ((int) lum) % 100;
@@ -103,16 +103,16 @@ int main(void)
   configUsart();
   int temperatura;
   //int luminosidade;
+  
     while (1) 
     {
       _delay_ms(1000);
       temperatura = readLM35();
-      convertToPercentage(temperatura);
-//      convertToCelsiusStr(temperatura);
+      convertToCelsiusStr(temperatura);
       send_(result);
 //       _delay_ms(1000);
-//      luminosidade = readLDR();
-//      convertToPercentage(luminosidade);
-//      send_(result);
+      //luminosidade = readLDR();
+      //convertToPercentage(luminosidade);
+      //send_(result);
     }
 }
