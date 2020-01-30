@@ -71,6 +71,7 @@ void configUsart()  {
   UBRR0L = 0x08; // 115200
   
   UCSR0B = 1 << TXEN0;
+  UCSR0C = 0b00000110; // Desabilita paridade, Seleciona um bit de stop
 }
 
 void configADC(){
@@ -133,8 +134,11 @@ void convertToCelsiusStr(int data){
 	float mv = ( data/1024.0)*5000;
 	float cel = mv/10;
 	ftoa(cel, result, 2);
-	result[4] = '\n';
-	result[5] = '\0';
+	result[4] = ' ';
+	result[5] = 'º';
+	result[6] = 'C';
+	result[7] = '\n';
+	result[8] = '\0';
 }
 
 
@@ -169,19 +173,42 @@ int main(void)
 {
   configADC();
   configUsart();
+  int cont =0;
   int temperatura;
   int luminosidade;
   
     while (1) 
-    {
-      _delay_ms(5000);
-      temperatura = readLM35();
-      convertToCelsiusStr(temperatura);
-      send_(result);
+    { 
+	  for(cont = 0; cont<6; cont++) {         
+		_delay_ms(5000);
+		  switch(cont){
+			case 0:
+				temperatura = readLM35();
+				convertToCelsiusStr(temperatura);
+				send_(result);
+				//delay(100);
+				luminosidade = readLDR();
+				convertToPercentage(luminosidade);
+				send_(result);
+				break;
+			case 2:
+				luminosidade = readLDR();
+				convertToPercentage(luminosidade);
+				send_(result);
+				break;
+			case 3:
+				temperatura = readLM35();
+				convertToCelsiusStr(temperatura);
+				send_(result);
+				break;
+			case 4:
+				luminosidade = readLDR();
+				convertToPercentage(luminosidade);
+				send_(result);
+				break;
+		  }
+	  }
 	  
-       _delay_ms(5000);
-      luminosidade = readLDR();
-      convertToPercentage(luminosidade);
-      send_(result);
+	  
     }
 }
