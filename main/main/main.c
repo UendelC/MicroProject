@@ -11,6 +11,7 @@
 
 char result[9]; 
 
+//Retirado de tutorialspoint.dev/language/c/convert-floating-point-number-string
 void reverse(char* str, int len)
 {
 	int i = 0, j = len - 1, temp;
@@ -23,6 +24,7 @@ void reverse(char* str, int len)
 	}
 }
 
+//Retirado de tutorialspoint.dev/language/c/convert-floating-point-number-string
 int intToStr(int x, char str[], int d)
 {
 	int i = 0;
@@ -42,6 +44,7 @@ int intToStr(int x, char str[], int d)
 }
 
 // Converts a floating-point/double number to a string.
+//Retirado de tutorialspoint.dev/language/c/convert-floating-point-number-string
 void ftoa(float n, char* res, int afterpoint)
 {
 	// Extract integer part
@@ -75,59 +78,20 @@ void configUsart()  {
 }
 
 void configADC(){
-//  ADMUX = 0x00; // Canal 0 do ADC
-  
   ADCSRA = 0x87; // Liga o ADC, não inicia a conversão
   ADCSRB = 0x00; // Uma conversão é iniciada sempre que o bit ADSC for setado
 }
 
-int readLDR() {
-  ADMUX = 0x02;
-  ADCSRA = ADCSRA | 0x40; //Inicia a conversão ADCS = 1
-  
-  while((ADCSRA & 0x10) != 0x10){} //Espera a conversão ser finalizada - ADIF = 1
-  unsigned char datal = ADCL;
-  unsigned char datah = ADCH;
-  //_delay_ms(200);
-  //unsigned int data = ADC;
-  ADCSRA = ADCSRA | 0x10; //Zera o flag
-
-  return ((datah << 8) | (datal)); //Inteiro sem sinal 16 bits - 0 a 1023
-}
-
-
-int readLM35(){
-  ADMUX = 0x00;
-  ADCSRA = ADCSRA | 0x40; //Inicia a conversão ADCS = 1
-  
-  while((ADCSRA & 0x10) != 0x10){} //Espera a conversão ser finalizada - ADIF=1
-  unsigned char datal = ADCL;
-  unsigned char datah = ADCH;
-  ///_delay_ms(200);
-  //unsigned int data = ADC;
-  ADCSRA = ADCSRA | 0x10; //Zera o Flag
-  
-  return ((datah << 8) | (datal)); //Inteiro sem sinal de 16 bits - 0 a 1023
-}
-
-
-void convertToCelsiusStra(int data){
+int analogRead(int ADMUX_){
+	ADMUX = ADMUX_;
+	ADCSRA = ADCSRA | 0x40; //Inicia a conversão ADCS = 1
 	
-  
-  long int celsius = data*488;
-
-
-  int inteira = celsius / 1000;
-  int decimal = celsius % 1000;
-  result[0] = inteira/100 + 48;
-  result[1] = (inteira % 100)/10 + 48;
-  result[2] = inteira % 10 + 48;
-  result[3] = ',';
-  result[4] = decimal/100 + 48;
-  result[5] = (decimal%100)/10 + 48;
-  result[6] = decimal%10 + 48;
-  result[7] = '\n';
-  result[8] = '\0';
+	while((ADCSRA & 0x10) != 0x10){} //Espera a conversão ser finalizada - ADIF=1
+	unsigned char datal = ADCL;
+	unsigned char datah = ADCH;
+	ADCSRA = ADCSRA | 0x10; //Zera o Flag
+	
+	return ((datah << 8) | (datal)); //Inteiro sem sinal de 16 bits - 0 a 1023
 }
 
 void convertToCelsiusStr(int data){
@@ -142,21 +106,15 @@ void convertToCelsiusStr(int data){
 }
 
 
-
 void convertToPercentage(int data) {
-  double lum = 100 * (100.0 / 1023) * data;
+  float lum = (100.0 / 1023) * data;
+  
+  ftoa(lum, result, 2);
 
-  int inteira = (int) lum / 100;
-  int decimal = ((int) lum) % 100;
-  result[0] = inteira/1000 ? inteira/1000 + 48 : ' ';
-  result[1] = (inteira % 1000)/100 ? (inteira % 1000)/100 + 48 : ' ';
-  result[2] = (inteira % 100)/10 + 48;
-  result[3] = inteira % 10 + 48;
-  result[4] = ',';
-  result[5] = decimal/10 + 48;
-  result[6] = '%';
-  result[7] = '\n';
-  result[8] = '\0';
+  result[4] = ' ';
+  result[5] = '%';
+  result[6] = '\n';
+  result[7] = '\0';
 }
 
 void send_(char * mensagem) {
@@ -183,26 +141,25 @@ int main(void)
 		_delay_ms(5000);
 		  switch(cont){
 			case 0:
-				temperatura = readLM35();
+				temperatura = analogRead(0x00);
 				convertToCelsiusStr(temperatura);
 				send_(result);
-				//delay(100);
-				luminosidade = readLDR();
+				luminosidade = analogRead(0x02);
 				convertToPercentage(luminosidade);
 				send_(result);
 				break;
 			case 2:
-				luminosidade = readLDR();
+				luminosidade = analogRead(0x02);
 				convertToPercentage(luminosidade);
 				send_(result);
 				break;
 			case 3:
-				temperatura = readLM35();
+				temperatura = analogRead(0x00);
 				convertToCelsiusStr(temperatura);
 				send_(result);
 				break;
 			case 4:
-				luminosidade = readLDR();
+				luminosidade = analogRead(0x02);
 				convertToPercentage(luminosidade);
 				send_(result);
 				break;
