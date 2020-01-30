@@ -67,8 +67,8 @@ void ftoa(float n, char* res, int afterpoint)
 }
 
 void configUsart()  {
-  UBRR0H = 0x00;
-  UBRR0L = 0x67;
+  UBRR0H = 0x00; // Define Baud Rate
+  UBRR0L = 0x08; // 115200
   
   UCSR0B = 1 << TXEN0;
 }
@@ -81,7 +81,7 @@ void configADC(){
 }
 
 int readLDR() {
-  //ADMUX = 0x02;
+  ADMUX = 0x02;
   ADCSRA = ADCSRA | 0x40; //Inicia a conversão ADCS = 1
   
   while((ADCSRA & 0x10) != 0x10){} //Espera a conversão ser finalizada - ADIF = 1
@@ -96,7 +96,7 @@ int readLDR() {
 
 
 int readLM35(){
-  //ADMUX = 0x00;
+  ADMUX = 0x00;
   ADCSRA = ADCSRA | 0x40; //Inicia a conversão ADCS = 1
   
   while((ADCSRA & 0x10) != 0x10){} //Espera a conversão ser finalizada - ADIF=1
@@ -133,6 +133,8 @@ void convertToCelsiusStr(int data){
 	float mv = ( data/1024.0)*5000;
 	float cel = mv/10;
 	ftoa(cel, result, 2);
+	result[4] = '\n';
+	result[5] = '\0';
 }
 
 
@@ -168,17 +170,18 @@ int main(void)
   configADC();
   configUsart();
   int temperatura;
-  //int luminosidade;
+  int luminosidade;
   
     while (1) 
     {
-      _delay_ms(1000);
+      _delay_ms(5000);
       temperatura = readLM35();
       convertToCelsiusStr(temperatura);
       send_(result);
-//       _delay_ms(1000);
-      //luminosidade = readLDR();
-      //convertToPercentage(luminosidade);
-      //send_(result);
+	  
+       _delay_ms(5000);
+      luminosidade = readLDR();
+      convertToPercentage(luminosidade);
+      send_(result);
     }
 }
