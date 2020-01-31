@@ -110,25 +110,6 @@ int readLM35(){
 }
 
 
-void convertToCelsiusStra(int data){
-	
-  
-  long int celsius = data*488;
-
-
-  int inteira = celsius / 1000;
-  int decimal = celsius % 1000;
-  result[0] = inteira/100 + 48;
-  result[1] = (inteira % 100)/10 + 48;
-  result[2] = inteira % 10 + 48;
-  result[3] = ',';
-  result[4] = decimal/100 + 48;
-  result[5] = (decimal%100)/10 + 48;
-  result[6] = decimal%10 + 48;
-  result[7] = '\n';
-  result[8] = '\0';
-}
-
 void convertToCelsiusStr(int data){
 	float mv = ( data/1024.0)*5000;
 	float cel = mv/10;
