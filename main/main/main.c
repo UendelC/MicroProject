@@ -11,6 +11,16 @@
 
 char result[9]; 
 
+float power(int a, int b){
+	int cont = a;
+	while(b != 1){
+		cont *= a;
+		b--;
+	}
+	
+	return(cont);
+}
+
 //Retirado de tutorialspoint.dev/language/c/convert-floating-point-number-string
 void reverse(char* str, int len)
 {
@@ -63,7 +73,7 @@ void ftoa(float n, char* res, int afterpoint)
 		// Get the value of fraction part upto given no.
 		// of points after dot. The third parameter
 		// is needed to handle cases like 233.007
-		fpart = fpart * pow(10, afterpoint);
+		fpart = fpart * power(10, afterpoint);
 		
 		intToStr((int)fpart, res + i + 1, afterpoint);
 	}
