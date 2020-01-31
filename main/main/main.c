@@ -11,6 +11,7 @@
 
 char result[9]; 
 
+//Retirado de tutorialspoint.dev/language/c/convert-floating-point-number-string
 void reverse(char* str, int len)
 {
 	int i = 0, j = len - 1, temp;
@@ -23,6 +24,7 @@ void reverse(char* str, int len)
 	}
 }
 
+//Retirado de tutorialspoint.dev/language/c/convert-floating-point-number-string
 int intToStr(int x, char str[], int d)
 {
 	int i = 0;
@@ -42,6 +44,7 @@ int intToStr(int x, char str[], int d)
 }
 
 // Converts a floating-point/double number to a string.
+//Retirado de tutorialspoint.dev/language/c/convert-floating-point-number-string
 void ftoa(float n, char* res, int afterpoint)
 {
 	// Extract integer part
@@ -67,71 +70,51 @@ void ftoa(float n, char* res, int afterpoint)
 }
 
 void configUsart()  {
-  UBRR0H = 0x00;
-  UBRR0L = 0x67;
+  UBRR0H = 0x00; // Define Baud Rate
+  UBRR0L = 0x08; // 115200
   
   UCSR0B = 1 << TXEN0;
+  UCSR0C = 0b00000110; // Desabilita paridade, Seleciona um bit de stop
 }
 
 void configADC(){
-//  ADMUX = 0x00; // Canal 0 do ADC
-  
   ADCSRA = 0x87; // Liga o ADC, não inicia a conversão
   ADCSRB = 0x00; // Uma conversão é iniciada sempre que o bit ADSC for setado
 }
 
-int readLDR() {
-  //ADMUX = 0x02;
-  ADCSRA = ADCSRA | 0x40; //Inicia a conversão ADCS = 1
-  
-  while((ADCSRA & 0x10) != 0x10){} //Espera a conversão ser finalizada - ADIF = 1
-  unsigned char datal = ADCL;
-  unsigned char datah = ADCH;
-  //_delay_ms(200);
-  //unsigned int data = ADC;
-  ADCSRA = ADCSRA | 0x10; //Zera o flag
-
-  return ((datah << 8) | (datal)); //Inteiro sem sinal 16 bits - 0 a 1023
+int analogRead(int ADMUX_){
+	ADMUX = ADMUX_;
+	ADCSRA = ADCSRA | 0x40; //Inicia a conversão ADCS = 1
+	
+	while((ADCSRA & 0x10) != 0x10){} //Espera a conversão ser finalizada - ADIF=1
+	unsigned char datal = ADCL;
+	unsigned char datah = ADCH;
+	ADCSRA = ADCSRA | 0x10; //Zera o Flag
+	
+	return ((datah << 8) | (datal)); //Inteiro sem sinal de 16 bits - 0 a 1023
 }
-
-
-int readLM35(){
-  //ADMUX = 0x00;
-  ADCSRA = ADCSRA | 0x40; //Inicia a conversão ADCS = 1
-  
-  while((ADCSRA & 0x10) != 0x10){} //Espera a conversão ser finalizada - ADIF=1
-  unsigned char datal = ADCL;
-  unsigned char datah = ADCH;
-  ///_delay_ms(200);
-  //unsigned int data = ADC;
-  ADCSRA = ADCSRA | 0x10; //Zera o Flag
-  
-  return ((datah << 8) | (datal)); //Inteiro sem sinal de 16 bits - 0 a 1023
-}
-
 
 void convertToCelsiusStr(int data){
 	float mv = ( data/1024.0)*5000;
 	float cel = mv/10;
 	ftoa(cel, result, 2);
+	result[4] = ' ';
+	result[5] = 'º';
+	result[6] = 'C';
+	result[7] = '\n';
+	result[8] = '\0';
 }
 
 
-
 void convertToPercentage(int data) {
-  double lum = 100 * (100.0 / 1023) * data;
+  float lum = (100.0 / 1023) * data;
+  
+  ftoa(lum, result, 2);
 
-  int inteira = (int) lum / 100;
-  int decimal = ((int) lum) % 100;
-  result[0] = inteira/1000 ? inteira/1000 + 48 : ' ';
-  result[1] = (inteira % 1000)/100 ? (inteira % 1000)/100 + 48 : ' ';
-  result[2] = (inteira % 100)/10 + 48;
-  result[3] = inteira % 10 + 48;
-  result[4] = ',';
-  result[5] = decimal/10 + 48;
-  result[6] = '%';
-  result[7] = '\n';
-  result[8] = '\0';
+  result[4] = ' ';
+  result[5] = '%';
+  result[6] = '\n';
+  result[7] = '\0';
 }
 
 void send_(char * mensagem) {
@@ -148,18 +131,41 @@ int main(void)
 {
   configADC();
   configUsart();
+  int cont =0;
   int temperatura;
-  //int luminosidade;
+  int luminosidade;
   
     while (1) 
-    {
-      _delay_ms(1000);
-      temperatura = readLM35();
-      convertToCelsiusStr(temperatura);
-      send_(result);
-//       _delay_ms(1000);
-      //luminosidade = readLDR();
-      //convertToPercentage(luminosidade);
-      //send_(result);
+    { 
+	  for(cont = 0; cont<6; cont++) {         
+		_delay_ms(5000);
+		  switch(cont){
+			case 0:
+				temperatura = analogRead(0x00);
+				convertToCelsiusStr(temperatura);
+				send_(result);
+				luminosidade = analogRead(0x02);
+				convertToPercentage(luminosidade);
+				send_(result);
+				break;
+			case 2:
+				luminosidade = analogRead(0x02);
+				convertToPercentage(luminosidade);
+				send_(result);
+				break;
+			case 3:
+				temperatura = analogRead(0x00);
+				convertToCelsiusStr(temperatura);
+				send_(result);
+				break;
+			case 4:
+				luminosidade = analogRead(0x02);
+				convertToPercentage(luminosidade);
+				send_(result);
+				break;
+		  }
+	  }
+	  
+	  
     }
 }
